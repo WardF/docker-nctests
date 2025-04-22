@@ -267,7 +267,7 @@ fi
 ## 
 # Set Target Dir
 ##
-export TARGDIR="/environments/${H5VER}-${CBRANCH}-${USE_CC}"
+export TARGDIR="/environments/${H5VER}-${USE_CC}"
 if [ "${USE_CC}" = "mpicc" ]; then
     export TARGDIR="${TARGDIR}.${MPICHVER}"
 fi
