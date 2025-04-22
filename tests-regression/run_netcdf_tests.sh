@@ -271,7 +271,16 @@ export TARGDIR="/environments/${H5VER}-${CBRANCH}-${USE_CC}"
 if [ "${USE_CC}" = "mpicc" ]; then
     export TARGDIR="${TARGDIR}.${MPICHVER}"
 fi
+
+export NC_TARGDIR="${TARGDIR}-nc${CBRANCH}"
+
 echo "Using TARGDIR=${TARGDIR}"
+echo "Using NC_TARGDIR=${NC_TARGDIR}"
+
+if [ -d "${NC_TARGDIR}" ]; then
+    echo "NC_TARGDIR: ${NC_TARGDIR} exists. Removing!"
+    rm -rf "${NC_TARGDIR}"
+fi
 
 ###
 # Install specific version of MPICH
@@ -301,6 +310,7 @@ export LD_LIBRARY_PATH="${TARGDIR}/lib"
 export LIBDIR="${TARGDIR}/lib"
 export PATH="${TARGDIR}/bin:$PATH"
 export CMAKE_PREFIX_PATH="${TARGDIR}"
+
 export USE_FC="gfortran"
 
 if [ "${CDOCS}" = "TRUE" -o "${CDOCS}" = "ON" ]; then
@@ -409,7 +419,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         sleep 2
         mkdir -p build-netcdf-c
         cd build-netcdf-c
-        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
+        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
         make clean
 
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -453,7 +463,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         if [ ! -f "configure" ]; then
             autoreconf -if
         fi
-        CC=$USE_CC ./configure --prefix=${TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS}
+        CC=$USE_CC ./configure --prefix=${NC_TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS}
         make clean
         make -j $TESTPROC ; CHECKERR
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -478,6 +488,15 @@ while [[ $CCOUNT -le $CREPS ]]; do
 done
 
 cd "${WORKING_DIRECTORY}"
+
+export CPPFLAGS="${CPPFLAGS}:-I${NC_TARGDIR}/include"
+export CFLAGS="${CFLAGS}:-I${NC_TARGDIR}/include"
+export LDFLAGS="${LDFLAGS}:-L${NC_TARGDIR}/lib"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${NC_TARGDIR}/lib"
+export LIBDIR="${LIBDIR}:${NC_TARGDIR}/lib"
+export PATH="${NC_TARGDIR}/bin:$PATH"
+export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${NC_TARGDIR}"
+
 
 if [ "${RUNF}" = "TRUE" -o "${RUNJAVA}" = "TRUE" -o "${RUNNCO}" = "TRUE" -o "${RUNP}" = "TRUE" -o "${RUNCXX4}" = "TRUE" ]; then
     echo ""
