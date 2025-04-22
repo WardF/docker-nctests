@@ -489,9 +489,9 @@ done
 
 cd "${WORKING_DIRECTORY}"
 
-export CPPFLAGS="${CPPFLAGS}:-I${NC_TARGDIR}/include"
-export CFLAGS="${CFLAGS}:-I${NC_TARGDIR}/include"
-export LDFLAGS="${LDFLAGS}:-L${NC_TARGDIR}/lib"
+export CPPFLAGS="${CPPFLAGS} -I${NC_TARGDIR}/include"
+export CFLAGS="${CFLAGS} -I${NC_TARGDIR}/include"
+export LDFLAGS="${LDFLAGS} -L${NC_TARGDIR}/lib"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${NC_TARGDIR}/lib"
 export LIBDIR="${LIBDIR}:${NC_TARGDIR}/lib"
 export PATH="${NC_TARGDIR}/bin:$PATH"
@@ -525,7 +525,11 @@ fi
 # Build & test netcdf-fortran
 ###
 if [ "x$RUNF" == "xTRUE" ]; then
-
+    echo "Fortran Environment Variables:"
+    echo "=============================="
+    env | sort
+    echo "=============================="
+    echo ""
     while [[ $FCOUNT -le $FREPS ]]; do
 
         if [ "x$USECMAKE" = "xTRUE" ]; then
@@ -574,7 +578,7 @@ if [ "x$RUNF" == "xTRUE" ]; then
             if [ ! -f "configure" ]; then
                 autoreconf -if
             fi
-            CC=$USE_CC FC=${USE_FC} F77=${USE_FC} ./configure "${AC_FOPTS}" ${AC_FDOC_OPTS}
+            CFLAGS=${CFLAGS} CPPFLAGS=${CPPFLAGS} LDFLAGS=${LDFLAGS} CC=$USE_CC FC=${USE_FC} F77=${USE_FC} ./configure "${AC_FOPTS}" ${AC_FDOC_OPTS}
             make -j $TESTPROC_FORTRAN ; CHECKERR
             make check TESTS="" -j $TESTPROC_FORTRAN
             make check -j $TESTPROC_FORTRAN ; CHECKERR_AC
