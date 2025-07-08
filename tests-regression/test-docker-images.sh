@@ -33,8 +33,8 @@ dosummary() {
     read
 }
 
-NCVER="v4.9.2"
-NFVER="v4.6.1"
+NCVER="v4.9.3"
+NFVER="v4.6.2"
 NJVER="maint-5.x"
 
 TESTSUFFIX=$(date +%s | cut -c 6- )
@@ -80,7 +80,7 @@ echo -e "\to command: ${DCMD}"
 ${DCMD} >> ${LOGFILE} 2>&1 ; CHECKERR
 echo ""
 
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (clang):"
 echo -e "======================================"
@@ -91,7 +91,7 @@ echo -e "\to command: ${DCMD}"
 ${DCMD} >> ${LOGFILE} 2>&1 ; CHECKERR
 echo ""
 
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (mpicc) (default version):"
 echo -e "======================================"
@@ -103,7 +103,7 @@ ${DCMD} >> ${LOGFILE} 2>&1 ; CHECKERR
 echo ""
 
 MPIVER="4.3.0"
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e MPICHVER=${MPIVER} -e USE_CC=clang docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e MPICHVER=${MPIVER} -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (mpicc) (version ${MPIVER}):"
 echo -e "======================================"
