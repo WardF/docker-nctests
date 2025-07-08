@@ -69,7 +69,7 @@ git clone git@github.com:Unidata/netcdf-java --single-branch --branch ${NJVER} $
 # Begin running tests
 ###
 
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=gcc docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJDIR}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=gcc docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (gcc):"
 echo -e "======================================"
@@ -80,7 +80,7 @@ echo -e "\to command: ${DCMD}"
 ${DCMD} >> ${LOGFILE} 2>&1 ; CHECKERR
 echo ""
 
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJDIR}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (clang):"
 echo -e "======================================"
@@ -91,7 +91,7 @@ echo -e "\to command: ${DCMD}"
 ${DCMD} >> ${LOGFILE} 2>&1 ; CHECKERR
 echo ""
 
-DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJVER}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
+DCMD="docker run --rm -it -v ${NCDIR}:/netcdf-c -v ${NFDIR}:/netcdf-fortran -v ${NJDIR}:/netcdf-java -v ${ENVDIR}:/environments -e USE_CC=clang -e RUNJAVA=TRUE -e USE_BUILDSYSTEM=both docker.unidata.ucar.edu/nctests"
 echo ""
 echo -e "Running Baseline Docker Test (mpicc) (default version):"
 echo -e "======================================"
