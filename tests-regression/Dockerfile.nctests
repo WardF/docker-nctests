@@ -4,14 +4,14 @@
 # shared layers that docker provides.
 #####
 #FROM ubuntu:22.04
-FROM ubuntu:24.04
-#FROM ubuntu:25.04
+#FROM ubuntu:24.04
+FROM ubuntu:25.04
 USER root
 ENV HOME=/root
 WORKDIR /root
 LABEL maintainer="Ward Fisher <wfisher@ucar.edu>"
 
-ENV NCTEST_VERSION="1.12.0 - development"
+ENV NCTEST_VERSION="1.12.1 - development"
 
 ENV VERSION_FILE=VERSION.md
 
