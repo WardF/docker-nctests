@@ -21,8 +21,8 @@ ENV VERSION_FILE=VERSION.md
 
 ENV CTEST_OUTPUT_ON_FAILURE=1
 
-ENV HDF5VER=1.14.3
-ENV H5VER=1.14.3
+ENV HDF5VER=1.14.6
+ENV H5VER=1.14.6
 ENV HDF5_VER=hdf5-${HDF5VER}
 ENV HDF5_FILE=${HDF5_VER}.tar.bz2
 ENV PNCVER=1.12.3
@@ -95,7 +95,7 @@ ENV CTEST_REPEAT=3
 # Copy over local tarballs.
 # No longer needed, all handled dynamically.
 ###
-#COPY hdf5-1.14.3.tar.bz2 pnetcdf-1.12.3.tar.gz hdf4.3.0.tar.gz ${HOME}/
+#COPY hdf5-1.14.6.tar.bz2 pnetcdf-1.12.3.tar.gz hdf4.3.0.tar.gz ${HOME}/
 
 
 ###
