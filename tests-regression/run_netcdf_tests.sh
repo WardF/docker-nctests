@@ -296,7 +296,12 @@ fi
 #if [ "x${HDF5SRC}" != "x" ]; then
 if [ ! -d "${TARGDIR}" ]; then
     echo "Building HDF5 ${H5VER} from source."
-    ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}"
+
+    if [ "${H5ROS3}" = "FALSE" ]; then
+        TMPROS3OPT="-v"
+    fi
+
+    ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}" "${TMPROS3OPT}"
 fi
 
 ###
