@@ -94,6 +94,11 @@ The following environmental variables can be used to control the behavior at run
   * If non-empty, the specified HDF5 version will be downloaded, compiled and installed at runtime instead of using the pre-built version.
     * Example: -e HDF5SRC="1.14.6"
 
+### Select AWS-S3-SDK
+
+* `USES3SDK` - Set TRUE to use AWS-S3-SDK. Default: `FALSE`
+* `S3SDKVER` - Version of AWS-S3-SDK to download and compile. Default: `main`
+
 ### Compiler Option
 ---
 
@@ -133,8 +138,6 @@ The following environmental variables can be used to control the behavior at run
 ---
 
 * `USE_BUILDSYSTEM` - 'Defaults to 'cmake'.  Options are `cmake`, `autotools`, `both`. 
-* ~~`USECMAKE` - Default to `TRUE`. When `TRUE`, run `cmake` builds.~~ **DEPRECATED**
-* ~~`USEAC` - Default to `FALSE`. When `TRUE`, run *in-source* `autoconf`-based builds.~~ **DEPRECATED**
 * `DISTCHECK` - Default to `FALSE`.  Requires `USE_BUILDSYSTEM` to be `autotools` or `both`.  Runs `make distcheck` after `make check`.
 
 ### Documentation generation

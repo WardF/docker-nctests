@@ -11,7 +11,7 @@ ENV HOME=/root
 WORKDIR /root
 LABEL maintainer="Ward Fisher <wfisher@ucar.edu>"
 
-ENV NCTEST_VERSION="1.12.1 - development"
+ENV NCTEST_VERSION="1.13.1 - development"
 
 ENV VERSION_FILE=VERSION.md
 
@@ -27,6 +27,11 @@ ENV HDF5_VER=hdf5-${HDF5VER}
 ENV HDF5_FILE=${HDF5_VER}.tar.bz2
 ENV H5ROS3=FALSE
 ENV PNCVER=1.12.3
+
+# AWS-releated
+ENV USES3SDK=FALSE
+ENV S3SDKVER=main
+
 ##
 # Let the user specify the branches.
 ##

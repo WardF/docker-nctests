@@ -262,6 +262,21 @@ else
     echo "Skipping NCO"
 fi
 
+##
+# AWS-S3-SDK
+##
+if [ "x$USES3SDK" != "xFALSE" ]; then
+    if [ -d "/s3-sdk-${S3SDKVER}" ]; then
+        echo "Using local AWS-S3-SDK repository"
+        cp -R /s3-sdk-${S3SDKVER} ${WORKING_DIRECTORY}
+    else
+        echo "Using remote AWS-S3-SDK repository"
+        git clone --recurse-submodules --branch "${S3SDKVER}" --single-branch --depth 1 https://github.com/aws/aws-sdk-cpp "s3-sdk-${S3SDKVER}}"
+    fi
+else
+    echo "Skipping AWS-S3-SDK"
+fi
+
 #
 
 ## 
@@ -302,6 +317,21 @@ if [ ! -d "${TARGDIR}" ]; then
     fi
 
     ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}" "${TMPROS3OPT}"
+fi
+
+###
+# Install S3 SDK if need be.
+###
+if [ "x$USES3SDK" != "xFALSE" ]; then
+    echo "Building AWS-S3-SDK from source."
+    cd "s3-sdk-${S3SDKVER}"
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="${TARGDIR}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DBUILD_ONLY="s3;transfer" -DCMAKE_INSTALL_RPATH="${TARGDIR}/lib" -DENABLE_TESTING=OFF -DCMAKE_MACOS_RPATH=ON
+    make -j "${TESTPROC}"
+    ${SUDOCMD} make install -j "${TESTPROC}"
+    make clean -j "${TESTPROC}"
+    cd ..
 fi
 
 ###
@@ -410,6 +440,12 @@ if [ "x$ENABLE_C_MEMCHECK" == "xTRUE" ]; then
     CMEM="-fsanitize=address -fno-omit-frame-pointer"
 fi
 
+S3OPTS_CMAKE=""
+S3OPTS_AC=""
+if [ "x${USES3SDK}" != "xFALSE" ]; then
+    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_AWS"
+    S3OPTS_AC="--enable-s3-aws"
+fi
 
 while [[ $CCOUNT -le $CREPS ]]; do
 
@@ -424,7 +460,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         sleep 2
         mkdir -p build-netcdf-c
         cd build-netcdf-c
-        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
+        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} ${S3OPTS_CMAKE} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
         make clean
 
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -468,7 +504,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         if [ ! -f "configure" ]; then
             autoreconf -if
         fi
-        CC=$USE_CC ./configure --prefix=${NC_TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS}
+        CC=$USE_CC ./configure --prefix=${NC_TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS} ${S3OPTS_AC}
         make clean
         make -j $TESTPROC ; CHECKERR
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -476,7 +512,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
             make check -j $TESTPROC ; CHECKERR_AC
 
             if [ "x$DISTCHECK" == "xTRUE" ]; then
-                DISTCHECK_CONFIGURE_FLAGS="--disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS}" make distcheck ; CHECKERR
+                DISTCHECK_CONFIGURE_FLAGS="--disable-hdf4 --enable-extra-tests --enable-mmap ${S3OPTS_AC} ${AC_COPTS}" make distcheck ; CHECKERR
             fi
 
         fi
