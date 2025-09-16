@@ -271,7 +271,7 @@ if [ "x$USES3SDK" != "xFALSE" ]; then
         cp -R /s3-sdk-${S3SDKVER} ${WORKING_DIRECTORY}
     else
         echo "Using remote AWS-S3-SDK repository"
-        git clone --recurse-submodules --branch "${S3SDKVER}" --single-branch --depth 1 https://github.com/aws/aws-sdk-cpp "s3-sdk-${S3SDKVER}}"
+        git clone --recurse-submodules --branch "${S3SDKVER}" --single-branch --depth 1 https://github.com/aws/aws-sdk-cpp "s3-sdk-${S3SDKVER}"
     fi
 else
     echo "Skipping AWS-S3-SDK"
@@ -442,8 +442,12 @@ fi
 
 S3OPTS_CMAKE=""
 S3OPTS_AC=""
-if [ "x${USES3SDK}" != "xFALSE" ]; then
-    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_AWS"
+
+if [ "x${USES3INT}" != "xFALSE" ]; then
+    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_INTERNAL=TRUE"
+    S3OPTS_AC="--enable-s3-internal"
+elif [ "x${USES3SDK}" != "xFALSE" ]; then
+    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_AWS=TRUE"
     S3OPTS_AC="--enable-s3-aws"
 fi
 

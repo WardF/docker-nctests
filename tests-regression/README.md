@@ -96,6 +96,9 @@ The following environmental variables can be used to control the behavior at run
 
 ### Select AWS-S3-SDK
 
+`USES3INT` takes precedence over `USES3SDK`
+
+* `USES3INT` - Set TRUE to use Internal interface.  Default: `FALSE`
 * `USES3SDK` - Set TRUE to use AWS-S3-SDK. Default: `FALSE`
 * `S3SDKVER` - Version of AWS-S3-SDK to download and compile. Default: `main`
 
