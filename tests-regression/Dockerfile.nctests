@@ -11,7 +11,7 @@ ENV HOME=/root
 WORKDIR /root
 LABEL maintainer="Ward Fisher <wfisher@ucar.edu>"
 
-ENV NCTEST_VERSION="1.13.1 - development"
+ENV NCTEST_VERSION="1.13.2 - development"
 
 ENV VERSION_FILE=VERSION.md
 
@@ -42,7 +42,7 @@ ENV CXXBRANCH=master
 ENV PBRANCH=master
 ENV NCOBRANCH=master
 ENV JAVABRANCH=maint-5.x
-ENV JDKVER=11
+ENV JDKVER=17
 ENV MPICHVER=default
 
 ##

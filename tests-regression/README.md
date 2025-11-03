@@ -81,7 +81,8 @@ The following environmental variables can be used to control the behavior at run
 * `CXXBRANCH` - Git branch for `netcdf-cxx4`
 * `JAVABRANCH` - Git branch for `netcdf-java` 
     * Default: `maint-5.x`
-    * `JDKVER` - Version of `OpenJDK` to run for tests. Default: `8` 
+    * `JDKVER` - Version of `OpenJDK` to run for tests. Default: `17` 
+        * Minimum version: `17`.
 * `PBRANCH` - Git branch for `netcdf4-python`
 * `NCOBRANCH` - Git branch for `NCO`. 
     * Default: `4.5.4`.

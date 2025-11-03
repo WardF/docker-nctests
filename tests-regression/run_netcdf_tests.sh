@@ -710,7 +710,7 @@ if [ "x$RUNJAVA" == "xTRUE" ]; then
     ${SUDOCMD} apt update && sudo apt install -y openjdk-${JDKVER}-jdk
     cd ${WORKING_DIRECTORY}/netcdf-java
 
-    GRADLE_OPTS="-DrunSlowTests=True"
+    GRADLE_OPTS="-DrunSlowTests=True -Djna.library.path=${LIBDIR}"
     if [ -d "/share/testdata/cdmUnitTest" ]; then
         GRADLE_OPTS="${GRADLE_OPTS} -Dunidata.testdata.path=/share/testdata"
     fi
