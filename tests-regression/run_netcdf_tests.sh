@@ -717,7 +717,7 @@ if [ "x$RUNJAVA" == "xTRUE" ]; then
 
     # run netCDF-Java tests that rely on the netCDF-C library
     # and do not trigger trap on failure
-    JNA_PATH=${LIBDIR} ./gradlew ${GRADLE_OPTS} clean :netcdf4:test${JDKVER} ; CHECKERRJAVA
+    ./gradlew ${GRADLE_OPTS} clean :netcdf4:test${JDKVER} ; CHECKERRJAVA
 
 
     cd ${WORKING_DIRECTORY}
