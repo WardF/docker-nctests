@@ -138,6 +138,7 @@ RUN dos2unix /root/install_mpich.sh
 RUN dos2unix /root/install_hdf5.sh
 
 RUN /bin/sh -x /root/provision_base_ubuntu.sh
+RUN sudo bash -x /root/install_mpich.sh -v 4.3.0 -j 8
 
 #####
 # Configure system and environment.

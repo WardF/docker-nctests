@@ -27,7 +27,7 @@ sudo apt-get -y install --no-install-recommends bzip2 g++ gfortran libtool autom
 ###
 # Custom mpich installs
 ###
-sudo bash -x  /root/install_mpich.sh -v 4.3.0 -j $(nproc)
+#sudo bash -x  /root/install_mpich.sh -v 4.3.0 -j $(nproc)
 
 
 ##
