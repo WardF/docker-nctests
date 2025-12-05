@@ -410,6 +410,20 @@ NCOCOUNT=1
 
 cd ${WORKING_DIRECTORY}
 
+##
+# Add a utility shortcut in the home directory.
+##
+if [ -L "${HOME}/working_directory" ] || [ -e "${HOME}/working_directory" ]; then
+    rm -f "${HOME}/working_directory"
+fi
+
+ln -s "${WORKING_DIRECTORY}" "${HOME}/working_directory"
+##
+# End utility shortcut.
+##
+
+
+
 ###
 # If we have specified CDOCS_DEV or FDOCS_DEV, we will generate this documentation first.
 ###
@@ -429,7 +443,6 @@ if [ "${FDOCS_DEV}" != "FALSE" -a "${RUNF}" != "FALSE" ]; then
 fi  
 
 cd ${WORKING_DIRECTORY}
-
 
 # CREPS is defined as an environmental variable.
 ###
