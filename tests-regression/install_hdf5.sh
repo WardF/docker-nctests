@@ -291,6 +291,18 @@ mkdir -p "${H5DIR}"
 $(echo ${H5UNTAR})
 
 cd "${H5DIR}"
+
+if [ ! -f "configure.ac" ]; then
+    echo ""
+    echo ""
+    echo "Warning: configure.ac file not found, failing over to cmake-based install"
+    echo ""
+    echo ""
+    sleep 2
+    TARGDIR="${TARGDIR}-cmake-failover"
+    USEBUILD="cmake"
+fi
+
 #CFLAGS="${CFLAGS} -Wno-format-security"
 if [ "x${USEBUILD}" = "xac" ]; then
     BUILDTESTSTRING="--disable-tests"
@@ -320,7 +332,7 @@ elif [ "x${USEBUILD}" = "xcmake" ]; then
     fi
     LDFLAGS_TMP="${LDFLAGS}"
     LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}"
-    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" ${H5_API_OP} "${ROS3OPT_CMAKE}"
+    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DHDF5_ENABLE_ZLIB_SUPPORT=TRUE ${H5_API_OP} "${ROS3OPT_CMAKE}"
     sleep 2
     make -j "${NUMPROC}"
     if [ "x${DONCTESTS}" = "xTRUE" ]; then
