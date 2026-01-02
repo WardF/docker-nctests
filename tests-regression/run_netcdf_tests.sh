@@ -639,8 +639,29 @@ fi
 if [ "x$RUNJAVA" == "xTRUE" ]; then
     echo -e "o Testing netcdf-java"
 
+    MINIMUM_BUILD_JDK="17"
+    MINIMUM_TEST_JDK="8"
+
+    # install the JDK requested to run the tests with
     ${SUDOCMD} apt update && sudo apt install -y openjdk-${JDKVER}-jdk
+
+    # ensure the minimum build version of the JDK is installed to run gradle
+    # install after the requested test JDK to ensure it is the active JDK when running the gradle command
+    if [ "$JDKVER" != "$MINIMUM_BUILD_JDK" ]; then
+        ${SUDOCMD} apt update && sudo apt install -y openjdk-${MINIMUM_BUILD_JDK}-jdk
+    fi
+
+    # set test task name
+    TEST_TASK="testWithJdk$JDKVER"
+    if [ "$JDKVER" == "$MINIMUM_TEST_JDK" ]; then
+        TEST_TASK="test"
+    fi
+
     cd ${WORKING_DIRECTORY}/netcdf-java
+
+    # allow gradle to auto-detect JDK versions
+    AUTO_DETECT_KEY="org.gradle.java.installations.auto-detect"
+    sed -i -e "s/${AUTO_DETECT_KEY}.*/${AUTO_DETECT_KEY}=true/g" ${WORKING_DIRECTORY}/netcdf-java/gradle.properties
 
     GRADLE_OPTS="-DrunSlowTests=True"
     if [ -d "/share/testdata/cdmUnitTest" ]; then
@@ -649,7 +670,7 @@ if [ "x$RUNJAVA" == "xTRUE" ]; then
 
     # run netCDF-Java tests that rely on the netCDF-C library
     # and do not trigger trap on failure
-    JNA_PATH=${LIBDIR} ./gradlew ${GRADLE_OPTS} clean :netcdf4:test ; CHECKERRJAVA
+    JNA_PATH=${LIBDIR} ./gradlew ${GRADLE_OPTS} clean :netcdf4:${TEST_TASK} ; CHECKERRJAVA
 
 
     cd ${WORKING_DIRECTORY}
