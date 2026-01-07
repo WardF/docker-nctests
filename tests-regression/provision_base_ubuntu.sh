@@ -22,12 +22,27 @@ echo "${CUSER} ALL=NOPASSWD: ALL" >> /etc/sudoers
 ###
 # Install some basics.
 ###
-sudo apt-get -y install --no-install-recommends bzip2 g++ gfortran libtool automake autoconf m4 bison flex libcurl4-openssl-dev zlib1g-dev git wget curl libjpeg-dev cmake gdb dos2unix gsl-bin libgsl0-dev udunits-bin libudunits2-0 libudunits2-dev clang zip valgrind python-setuptools-doc make build-essential less unzip patch libsz2 libaec-dev libssl-dev cmake libxml2 libxml2-dev mpich nano libmpich-dev graphviz doxygen bpytop
+sudo apt-get -y install --no-install-recommends bzip2 g++ gfortran libtool automake autoconf m4 bison flex libcurl4-openssl-dev zlib1g-dev git wget curl libjpeg-dev cmake gdb dos2unix gsl-bin libgsl0-dev udunits-bin libudunits2-0 libudunits2-dev clang zip valgrind python-setuptools-doc make build-essential less unzip patch libsz2 libssl-dev cmake libxml2 libxml2-dev mpich nano libmpich-dev graphviz doxygen bpytop
 
 ###
 # Custom mpich installs
 ###
 #sudo bash -x  /root/install_mpich.sh -v 4.3.0 -j $(nproc)
+
+###
+# Custom libaec install so that we get cmake config files.
+###
+git clone https://gitlab.dkrz.de/k202009/libaec.git
+cd libaec
+git checkout $(git tag -l | tail -n 1)
+mkdir build
+cd build
+cmake ..
+make -j $(nproc)
+sudo make install
+cd ..
+cd ..
+rm -rf libaec
 
 
 ##
