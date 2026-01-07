@@ -287,8 +287,8 @@ if [ "${USE_CC}" = "mpicc" ]; then
     export TARGDIR="${TARGDIR}.${MPICHVER}"
 fi
 
-export NC_TARGDIR="${TARGDIR}-nc${CBRANCH}"
-
+#export NC_TARGDIR="${TARGDIR}-nc${CBRANCH}"
+export NC_TARGDIR="${TARGDIR}"
 echo "Using TARGDIR=${TARGDIR}"
 echo "Using NC_TARGDIR=${NC_TARGDIR}"
 
