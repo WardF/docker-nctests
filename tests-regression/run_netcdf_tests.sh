@@ -720,7 +720,24 @@ fi
 if [ "x$RUNJAVA" == "xTRUE" ]; then
     echo -e "o Testing netcdf-java"
 
+    MINIMUM_BUILD_JDK="17"
+    MINIMUM_TEST_JDK="8"
+
+    # install the JDK requested to run the tests with
     ${SUDOCMD} apt update && sudo apt install -y openjdk-${JDKVER}-jdk
+
+    # ensure the minimum build version of the JDK is installed to run gradle
+    # install after the requested test JDK to ensure it is the active JDK when running the gradle command
+    if [ "$JDKVER" != "$MINIMUM_BUILD_JDK" ]; then
+        ${SUDOCMD} apt update && sudo apt install -y openjdk-${MINIMUM_BUILD_JDK}-jdk
+    fi
+
+    # set test task name
+    TEST_TASK="testWithJdk$JDKVER"
+    if [ "$JDKVER" == "$MINIMUM_TEST_JDK" ]; then
+        TEST_TASK="test"
+    fi
+
     cd ${WORKING_DIRECTORY}/netcdf-java
 
     GRADLE_OPTS="-DrunSlowTests=True -Djna.library.path=${LIBDIR}"
