@@ -343,7 +343,7 @@ elif [ "x${USEBUILD}" = "xcmake" ]; then
     rm -rf build
     LDFLAGS="${LDFLAGS_TMP}"
     unset LDFLAGS_TMP
-
+    cd ..
 fi
 
 if [ "x$DOPAR" = "xTRUE" ]; then
