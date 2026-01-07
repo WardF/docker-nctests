@@ -262,16 +262,40 @@ else
     echo "Skipping NCO"
 fi
 
+##
+# AWS-S3-SDK
+##
+if [ "x$USES3SDK" != "xFALSE" ]; then
+    if [ -d "/s3-sdk-${S3SDKVER}" ]; then
+        echo "Using local AWS-S3-SDK repository"
+        cp -R /s3-sdk-${S3SDKVER} ${WORKING_DIRECTORY}
+    else
+        echo "Using remote AWS-S3-SDK repository"
+        git clone --recurse-submodules --branch "${S3SDKVER}" --single-branch --depth 1 https://github.com/aws/aws-sdk-cpp "s3-sdk-${S3SDKVER}"
+    fi
+else
+    echo "Skipping AWS-S3-SDK"
+fi
+
 #
 
 ## 
 # Set Target Dir
 ##
-export TARGDIR="/environments/${H5VER}-${CBRANCH}-${USE_CC}"
+export TARGDIR="/environments/${H5VER}-${USE_CC}"
 if [ "${USE_CC}" = "mpicc" ]; then
     export TARGDIR="${TARGDIR}.${MPICHVER}"
 fi
+
+#export NC_TARGDIR="${TARGDIR}-nc${CBRANCH}"
+export NC_TARGDIR="${TARGDIR}"
 echo "Using TARGDIR=${TARGDIR}"
+echo "Using NC_TARGDIR=${NC_TARGDIR}"
+
+if [ -d "${NC_TARGDIR}" ]; then
+    echo "NC_TARGDIR: ${NC_TARGDIR} exists. Removing!"
+    rm -rf "${NC_TARGDIR}"
+fi
 
 ###
 # Install specific version of MPICH
@@ -287,7 +311,27 @@ fi
 #if [ "x${HDF5SRC}" != "x" ]; then
 if [ ! -d "${TARGDIR}" ]; then
     echo "Building HDF5 ${H5VER} from source."
-    ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}"
+
+    if [ "${H5ROS3}" = "FALSE" ]; then
+        TMPROS3OPT="-v"
+    fi
+
+    ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}" "${TMPROS3OPT}"
+fi
+
+###
+# Install S3 SDK if need be.
+###
+if [ "x$USES3SDK" != "xFALSE" ]; then
+    echo "Building AWS-S3-SDK from source."
+    cd "s3-sdk-${S3SDKVER}"
+    mkdir build
+    cd build
+    cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="${TARGDIR}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DBUILD_ONLY="s3;transfer" -DCMAKE_INSTALL_RPATH="${TARGDIR}/lib" -DENABLE_TESTING=OFF -DCMAKE_MACOS_RPATH=ON
+    make -j "${TESTPROC}"
+    ${SUDOCMD} make install -j "${TESTPROC}"
+    make clean -j "${TESTPROC}"
+    cd ..
 fi
 
 ###
@@ -301,6 +345,7 @@ export LD_LIBRARY_PATH="${TARGDIR}/lib"
 export LIBDIR="${TARGDIR}/lib"
 export PATH="${TARGDIR}/bin:$PATH"
 export CMAKE_PREFIX_PATH="${TARGDIR}"
+
 export USE_FC="gfortran"
 
 if [ "${CDOCS}" = "TRUE" -o "${CDOCS}" = "ON" ]; then
@@ -365,6 +410,20 @@ NCOCOUNT=1
 
 cd ${WORKING_DIRECTORY}
 
+##
+# Add a utility shortcut in the home directory.
+##
+if [ -L "${HOME}/working_directory" ] || [ -e "${HOME}/working_directory" ]; then
+    rm -f "${HOME}/working_directory"
+fi
+
+ln -s "${WORKING_DIRECTORY}" "${HOME}/working_directory"
+##
+# End utility shortcut.
+##
+
+
+
 ###
 # If we have specified CDOCS_DEV or FDOCS_DEV, we will generate this documentation first.
 ###
@@ -385,7 +444,6 @@ fi
 
 cd ${WORKING_DIRECTORY}
 
-
 # CREPS is defined as an environmental variable.
 ###
 # Determine if we are doing memory checks.
@@ -395,6 +453,16 @@ if [ "x$ENABLE_C_MEMCHECK" == "xTRUE" ]; then
     CMEM="-fsanitize=address -fno-omit-frame-pointer"
 fi
 
+S3OPTS_CMAKE=""
+S3OPTS_AC=""
+
+if [ "x${USES3INT}" != "xFALSE" ]; then
+    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_INTERNAL=TRUE"
+    S3OPTS_AC="--enable-s3-internal"
+elif [ "x${USES3SDK}" != "xFALSE" ]; then
+    S3OPTS_CMAKE="-DNETCDF_ENABLE_S3_AWS=TRUE"
+    S3OPTS_AC="--enable-s3-aws"
+fi
 
 while [[ $CCOUNT -le $CREPS ]]; do
 
@@ -409,7 +477,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         sleep 2
         mkdir -p build-netcdf-c
         cd build-netcdf-c
-        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} $COPTS -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
+        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_HDF4=OFF -DNETCDF_ENABLE_MMAP=ON -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} ${S3OPTS_CMAKE} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
         make clean
 
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -453,7 +521,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         if [ ! -f "configure" ]; then
             autoreconf -if
         fi
-        CC=$USE_CC ./configure --prefix=${TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap $AC_COPTS
+        CC=$USE_CC ./configure --prefix=${NC_TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} --disable-hdf4 --enable-extra-tests --enable-mmap ${AC_COPTS} ${S3OPTS_AC}
         make clean
         make -j $TESTPROC ; CHECKERR
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -461,7 +529,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
             make check -j $TESTPROC ; CHECKERR_AC
 
             if [ "x$DISTCHECK" == "xTRUE" ]; then
-                DISTCHECK_CONFIGURE_FLAGS="--disable-hdf4 --enable-extra-tests --enable-mmap $AC_COPTS" make distcheck ; CHECKERR
+                DISTCHECK_CONFIGURE_FLAGS="--disable-hdf4 --enable-extra-tests --enable-mmap ${S3OPTS_AC} ${AC_COPTS}" make distcheck ; CHECKERR
             fi
 
         fi
@@ -478,6 +546,15 @@ while [[ $CCOUNT -le $CREPS ]]; do
 done
 
 cd "${WORKING_DIRECTORY}"
+
+export CPPFLAGS="${CPPFLAGS} -I${NC_TARGDIR}/include"
+export CFLAGS="${CFLAGS} -I${NC_TARGDIR}/include"
+export LDFLAGS="${LDFLAGS} -L${NC_TARGDIR}/lib"
+export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${NC_TARGDIR}/lib"
+export LIBDIR="${LIBDIR}:${NC_TARGDIR}/lib"
+export PATH="${NC_TARGDIR}/bin:$PATH"
+export CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH}:${NC_TARGDIR}"
+
 
 if [ "${RUNF}" = "TRUE" -o "${RUNJAVA}" = "TRUE" -o "${RUNNCO}" = "TRUE" -o "${RUNP}" = "TRUE" -o "${RUNCXX4}" = "TRUE" ]; then
     echo ""
@@ -506,7 +583,11 @@ fi
 # Build & test netcdf-fortran
 ###
 if [ "x$RUNF" == "xTRUE" ]; then
-
+    echo "Fortran Environment Variables:"
+    echo "=============================="
+    env | sort
+    echo "=============================="
+    echo ""
     while [[ $FCOUNT -le $FREPS ]]; do
 
         if [ "x$USECMAKE" = "xTRUE" ]; then
@@ -526,7 +607,7 @@ if [ "x$RUNF" == "xTRUE" ]; then
             cd build-netcdf-fortran
             set -x
 
-            cmake ${WORKING_DIRECTORY}/netcdf-fortran -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" ${CMAKE_FDOC_OPTS} -DBUILDNAME_SUFFIX="$FBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS_FORTRAN} $FOPTS
+            cmake ${WORKING_DIRECTORY}/netcdf-fortran -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" ${CMAKE_FDOC_OPTS} -DBUILDNAME_SUFFIX="$FBRANCH" -DCMAKE_C_COMPILER=$USE_CC ${CMAKE_PAR_OPTS_FORTRAN} ${CMAKE_FOPTS}
             
             set +x
 
@@ -555,13 +636,13 @@ if [ "x$RUNF" == "xTRUE" ]; then
             if [ ! -f "configure" ]; then
                 autoreconf -if
             fi
-            CC=$USE_CC FC=${USE_FC} F77=${USE_FC} ./configure "$AC_FOPTS" ${AC_FDOC_OPTS}
+            CFLAGS=${CFLAGS} CPPFLAGS=${CPPFLAGS} LDFLAGS=${LDFLAGS} CC=$USE_CC FC=${USE_FC} F77=${USE_FC} ./configure "${AC_FOPTS}" ${AC_FDOC_OPTS}
             make -j $TESTPROC_FORTRAN ; CHECKERR
             make check TESTS="" -j $TESTPROC_FORTRAN
             make check -j $TESTPROC_FORTRAN ; CHECKERR_AC
 
             if [ "x$DISTCHECK" == "xTRUE" ]; then
-                DISTCHECK_CONFIGURE_FLAGS="$AC_FOPTS" make distcheck -j $TESTPROC_FORTRAN ; CHECKERR
+                DISTCHECK_CONFIGURE_FLAGS="${AC_FOPTS}" make distcheck -j $TESTPROC_FORTRAN ; CHECKERR
             fi
 
             if [ "${FDOCS}" = "TRUE" -o "${FDOCS}" = "ON" ]; then
@@ -659,18 +740,14 @@ if [ "x$RUNJAVA" == "xTRUE" ]; then
 
     cd ${WORKING_DIRECTORY}/netcdf-java
 
-    # allow gradle to auto-detect JDK versions
-    AUTO_DETECT_KEY="org.gradle.java.installations.auto-detect"
-    sed -i -e "s/${AUTO_DETECT_KEY}.*/${AUTO_DETECT_KEY}=true/g" ${WORKING_DIRECTORY}/netcdf-java/gradle.properties
-
-    GRADLE_OPTS="-DrunSlowTests=True"
+    GRADLE_OPTS="-DrunSlowTests=True -Djna.library.path=${LIBDIR}"
     if [ -d "/share/testdata/cdmUnitTest" ]; then
         GRADLE_OPTS="${GRADLE_OPTS} -Dunidata.testdata.path=/share/testdata"
     fi
 
     # run netCDF-Java tests that rely on the netCDF-C library
     # and do not trigger trap on failure
-    JNA_PATH=${LIBDIR} ./gradlew ${GRADLE_OPTS} clean :netcdf4:${TEST_TASK} ; CHECKERRJAVA
+    ./gradlew ${GRADLE_OPTS} clean :netcdf4:test${JDKVER} ; CHECKERRJAVA
 
 
     cd ${WORKING_DIRECTORY}

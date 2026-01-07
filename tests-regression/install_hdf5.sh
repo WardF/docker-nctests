@@ -18,6 +18,9 @@ BUILDARGCMAKE="-DBUILD_SHARED_LIBS=TRUE"
 BUILDTYPECFLAG=""
 TARGDIR="${HOME}/hdf5-install"
 
+ROS3OPT_AC="--enable-ros3-vfd"
+ROS3OPT_CMAKE="-DHDF5_ENABLE_ROS3_VFD=ON"
+
 ##
 # Fetch the File if $2 is non-zero
 # ex:
@@ -83,6 +86,7 @@ dohelp() {
     echo -e "\t-j | --cpus:\t\tNumber of processors to use (default: $(nproc))"
     echo -e "\t-p | --pncver:\t\tVersion of pnetcdf to install (mpicc only)(default: 1.12.3)"
     echo -e "\t-t | --targdir:\t\tTarget directory to install to (default ${TARGDIR})"
+    echo -e "\t-v | --disable-ros3:\t Disable ROS3 VFD"
     echo -e ""  
     echo -e "Example:"
     echo -e "\t$ $0 -d 1.14.4 -a -3 -j 4 -c gcc -t /usr/local"
@@ -97,7 +101,7 @@ if [ $# -lt 1 ]; then
     exit
 fi
 ALLARGS="$@"
-LONGARGS=$(getopt -o a:c:d:hj:p:t: --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir: -- "$@")
+LONGARGS=$(getopt -o a:c:d:hj:p:t:v --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir:,disable-ros3 -- "$@")
 
 #echo "LONGARGS: ${LONGARGS}"
 eval set -- $LONGARGS
@@ -138,6 +142,11 @@ do
         -t | --targdir)
             TARGDIR="$2"
             shift 2
+            ;;
+        -v | --disable-ros3)
+            ROS3OPT_AC="--disable-ros3-vfd"
+            ROS3OPT_CMAKE="-DHDF5_ENABLE_ROS3_VFD=OFF"
+            shift
             ;;
        --) shift; break ;;
         *) 
@@ -282,6 +291,18 @@ mkdir -p "${H5DIR}"
 $(echo ${H5UNTAR})
 
 cd "${H5DIR}"
+
+if [ ! -f "configure.ac" ]; then
+    echo ""
+    echo ""
+    echo "Warning: configure.ac file not found, failing over to cmake-based install"
+    echo ""
+    echo ""
+    sleep 2
+    
+    USEBUILD="cmake"
+fi
+
 #CFLAGS="${CFLAGS} -Wno-format-security"
 if [ "x${USEBUILD}" = "xac" ]; then
     BUILDTESTSTRING="--disable-tests"
@@ -291,7 +312,7 @@ if [ "x${USEBUILD}" = "xac" ]; then
 
     autoreconf -if 
     H5_API_OP="--with-default-api-version=v110"
-    CFLAGS="${CFLAGS} ${HDF5_CFLAGS} -Wno-implicit-function-declaration" CC="${NCCOMP}" LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}" ./configure ${BUILDARGAC} "${BUILDTESTSTRING}" --prefix="${TARGDIR}" "${H5PAROPT}" --enable-hl --with-szlib ${H5_API_OP} "${BUILDDEBUGHDF5}"
+    CFLAGS="${CFLAGS} ${HDF5_CFLAGS} -Wno-implicit-function-declaration" CC="${NCCOMP}" LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}" ./configure ${BUILDARGAC} "${BUILDTESTSTRING}" --prefix="${TARGDIR}" "${H5PAROPT}" --enable-hl --with-szlib ${H5_API_OP} "${BUILDDEBUGHDF5}" "${ROS3OPT_AC}"
     sleep 2
     make -j "${NUMPROC}"
     if [ "x${DONCTESTS}" = "xTRUE" ]; then
@@ -311,7 +332,7 @@ elif [ "x${USEBUILD}" = "xcmake" ]; then
     fi
     LDFLAGS_TMP="${LDFLAGS}"
     LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}"
-    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" ${H5_API_OP}
+    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DHDF5_ENABLE_SZIP_SUPPORT=TRUE -DHDF5_ENABLE_ZLIB_SUPPORT=TRUE ${H5_API_OP} "${ROS3OPT_CMAKE}" DCMAKE_INSTALL_NAME_DIR="${TARGDIR}/lib"
     sleep 2
     make -j "${NUMPROC}"
     if [ "x${DONCTESTS}" = "xTRUE" ]; then

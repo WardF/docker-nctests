@@ -111,9 +111,9 @@ The following environmental variables can be used to control the behavior at run
 ### CFlags for CMake, autotools-based builds.
 ---
 
-* `COPTS` - CMake options for `netcdf-c`
-* `FOPTS` - CMake options for `netcdf-fortran`
-* `CXXOPTS` - CMake options for `netcdf-cxx4`
+* `CMAKE_COPTS` - CMake options for `netcdf-c`
+* `CMAKE_FOPTS` - CMake options for `netcdf-fortran`
+* `CMAKE_CXXOPTS` - CMake options for `netcdf-cxx4`
 * `AC_COPTS` - Autoconf options for `netcdf-c`
 * `AC_FOPTS` - Autoconf options for `netcdf-fortran`
 * `AC_CXXOPTS` - Autoconf options for `netcdf-cxx4`
