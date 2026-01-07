@@ -32,8 +32,8 @@ dosummary() {
     read
 }
 
-NCVER="v4.9.2"
-NFVER="v4.6.1"
+NCVER="v4.9.3"
+NFVER="v4.6.2"
 NJVER="maint-5.x"
 
 TESTSUFFIX=$(date +%s | cut -c 6- )

@@ -3,13 +3,15 @@
 # so that we can take advantage of the
 # shared layers that docker provides.
 #####
-FROM ubuntu:22.04 
+#FROM ubuntu:22.04
+#FROM ubuntu:24.04
+FROM ubuntu:25.04
 USER root
 ENV HOME=/root
 WORKDIR /root
 LABEL maintainer="Ward Fisher <wfisher@ucar.edu>"
 
-ENV NCTEST_VERSION="1.11.3 - development"
+ENV NCTEST_VERSION="1.13.4 - development"
 
 ENV VERSION_FILE=VERSION.md
 
@@ -19,11 +21,19 @@ ENV VERSION_FILE=VERSION.md
 
 ENV CTEST_OUTPUT_ON_FAILURE=1
 
-ENV HDF5VER=1.14.3
-ENV H5VER=1.14.3
+ENV HDF5VER=1.14.6
+ENV H5VER=1.14.6
 ENV HDF5_VER=hdf5-${HDF5VER}
 ENV HDF5_FILE=${HDF5_VER}.tar.bz2
+ENV H5ROS3=FALSE
 ENV PNCVER=1.12.3
+ENV BASEDIR=/environments
+
+# AWS-releated
+ENV USES3INT=FALSE
+ENV USES3SDK=FALSE
+ENV S3SDKVER=main
+
 ##
 # Let the user specify the branches.
 ##
@@ -33,7 +43,7 @@ ENV CXXBRANCH=master
 ENV PBRANCH=master
 ENV NCOBRANCH=master
 ENV JAVABRANCH=maint-5.x
-ENV JDKVER=8
+ENV JDKVER=17
 ENV MPICHVER=default
 
 ##
@@ -59,6 +69,7 @@ ENV WORKING_DIRECTORY=/workdir
 ENV BITNESS=64
 ENV USE_CC=gcc
 ENV USE_CXX=g++
+
 
 ENV RUNC=TRUE
 ENV RUNF=TRUE
@@ -93,7 +104,7 @@ ENV CTEST_REPEAT=3
 # Copy over local tarballs.
 # No longer needed, all handled dynamically.
 ###
-#COPY hdf5-1.14.3.tar.bz2 pnetcdf-1.12.3.tar.gz hdf4.3.0.tar.gz ${HOME}/
+#COPY hdf5-1.14.6.tar.bz2 pnetcdf-1.12.3.tar.gz hdf4.3.0.tar.gz ${HOME}/
 
 
 ###
@@ -128,6 +139,7 @@ RUN dos2unix /root/install_mpich.sh
 RUN dos2unix /root/install_hdf5.sh
 
 RUN /bin/sh -x /root/provision_base_ubuntu.sh
+RUN sudo bash -x /root/install_mpich.sh -v 4.3.0 -j $(nproc)
 
 #####
 # Configure system and environment.
@@ -144,6 +156,8 @@ COPY run_netcdf_tests.sh ${HOME}/
 COPY run_tests.sh ${HOME}/
 COPY install_hdf5.sh ${HOME}/
 COPY install_mpich.sh ${HOME}/
+COPY env_activate.sh ${HOME}/
+COPY env_deactivate.sh ${HOME}/
 
 COPY README.md ${HOME}/
 COPY Dockerfile.nctests ${HOME}/
@@ -158,8 +172,12 @@ RUN dos2unix ${HOME}/run_tests.sh
 RUN dos2unix ${HOME}/run_netcdf_tests.sh 
 RUN dos2unix ${HOME}/install_hdf5.sh
 RUN dos2unix ${HOME}/install_mpich.sh
+RUN dos2unix ${HOME}/env_activate.sh
+RUN dos2unix ${HOME}/env_deactivate.sh
 RUN chmod 755 ${HOME}/install_mpich.sh
 RUN chmod 755 ${HOME}/install_hdf5.sh
+RUN chmod 755 ${HOME}/env_activate.sh
+RUN chmod 755 ${HOME}/env_deactivate.sh
 
 
 ENTRYPOINT ["/bin/bash", "-l", "-e", "/home/tester/run_tests.sh"]
