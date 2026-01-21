@@ -2,10 +2,10 @@
 # Common stuff at front.
 ####
 #FROM ubuntu:xenial
-FROM docker.unidata.ucar.edu/nctests:latest
+FROM unidata/nctests:latest
 LABEL maintainer="Ward Fisher <wfisher@ucar.edu>"
 USER root
-ENV H5VER=1.14.3
+ENV H5VER=1.14.6
 ENV HOME=/root
 WORKDIR /root
 
@@ -29,7 +29,7 @@ RUN apt-get install -y ca-certificates man nano curl git emacs wget gcc g++ gfor
 #RUN tar -jxf hdf5-1.14.3.tar.bz2 && cd hdf5-1.14.3 && ./configure --prefix=/usr --disable-static --enable-shared --enable-hl && make -j $(nproc) && make install -j $(nproc)
 #RUN 
 ###
-ENV H5VER=1.14.3
+
 RUN /home/tester/install_hdf5.sh -c gcc -d ${H5VER} -j $(nproc) -t /usr
 
 
