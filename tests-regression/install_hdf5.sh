@@ -18,6 +18,7 @@ BUILDARGAC="--disable-static --enable-shared"
 BUILDARGCMAKE="-DBUILD_SHARED_LIBS=TRUE"
 BUILDTYPECFLAG=""
 TARGDIR="${HOME}/hdf5-install"
+DO32BIT=""
 
 ROS3OPT_AC="--enable-ros3-vfd"
 ROS3OPT_CMAKE="-DHDF5_ENABLE_ROS3_VFD=ON"
@@ -67,6 +68,9 @@ dosummary() {
     echo -e "Processors to use:\t\t${NUMPROC}"
     echo -e "Build system:\t\t\t${USEBUILD}"
     echo -e "Debug Symbols:\t\t\t${BUILDDEBUG}"
+    if [ "${BITARG32}" != "" ]; then
+        echo -e "32-Bit Build:\t\t\t${BITARG32}"
+    fi
 
     echo
     
@@ -90,6 +94,8 @@ dohelp() {
     echo -e "\t-t | --targdir:\t\tTarget directory to install to (default ${TARGDIR})"
     echo -e "\t-v | --disable-ros3:\t Disable ROS3 VFD"
     echo -e ""  
+    echo -e "\t-y | --enable-32bit:\t Enable 32-bit build"
+    echo ""
     echo -e "Example:"
     echo -e "\t$ $0 -d 1.14.4 -a -3 -j 4 -c gcc -t /usr/local"
     echo -e ""
@@ -103,7 +109,7 @@ if [ $# -lt 1 ]; then
     exit
 fi
 ALLARGS="$@"
-LONGARGS=$(getopt -o a:c:d:hj:p:t:v --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir:,disable-ros3 -- "$@")
+LONGARGS=$(getopt -o a:c:d:hj:p:t:vy --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir:,disable-ros3,--enable-32bit -- "$@")
 
 #echo "LONGARGS: ${LONGARGS}"
 eval set -- $LONGARGS
@@ -149,6 +155,10 @@ do
         -v | --disable-ros3)
             ROS3OPT_AC="--disable-ros3-vfd"
             ROS3OPT_CMAKE="-DHDF5_ENABLE_ROS3_VFD=OFF"
+            shift
+            ;;
+        -y | --enable-32bit)
+            BITARG32="-m32"
             shift
             ;;
        --) shift; break ;;
@@ -327,7 +337,7 @@ if [ "x${USEBUILD}" = "xac" ]; then
 
     autoreconf -if 
     H5_API_OP="--with-default-api-version=v110"
-    CFLAGS="${CFLAGS} ${HDF5_CFLAGS} -Wno-implicit-function-declaration" CXX=$USE_CXX CC="${NCCOMP}" LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}" ./configure ${BUILDARGAC} "${BUILDTESTSTRING}" --prefix="${TARGDIR}" "${H5PAROPT}" --enable-hl --with-szlib ${H5_API_OP} "${BUILDDEBUGHDF5}" "${ROS3OPT_AC}"
+    CFLAGS="${CFLAGS} ${HDF5_CFLAGS} ${BITARG32} -Wno-implicit-function-declaration" CXX=$USE_CXX CC="${NCCOMP}" LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}" ./configure ${BUILDARGAC} "${BUILDTESTSTRING}" --prefix="${TARGDIR}" "${H5PAROPT}" --enable-hl --with-szlib ${H5_API_OP} "${BUILDDEBUGHDF5}" "${ROS3OPT_AC}"
     sleep 2
     make -j "${NUMPROC}"
     if [ "x${DONCTESTS}" = "xTRUE" ]; then
@@ -347,7 +357,7 @@ elif [ "x${USEBUILD}" = "xcmake" ]; then
     fi
     LDFLAGS_TMP="${LDFLAGS}"
     LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}"
-    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" -DCMAKE_CXX_COMPILER="${USE_CXX}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DHDF5_ENABLE_SZIP_SUPPORT=TRUE -DHDF5_ENABLE_ZLIB_SUPPORT=TRUE ${H5_API_OP} "${ROS3OPT_CMAKE}" DCMAKE_INSTALL_NAME_DIR="${TARGDIR}/lib"
+    cmake .. -DHDF5_BUILD_TOOLS=OFF -DBUILD_TESTING="${BUILDTESTSTRING}" -DCMAKE_C_FLAGS="${CFLAGS} ${HDF5_CFLAGS} ${BITARG32}" ${H5PAROPT_CMAKE} -DCMAKE_C_COMPILER="${NCCOMP}" -DCMAKE_CXX_COMPILER="${USE_CXX}" "${BUILDARGCMAKE}" -DCMAKE_INSTALL_PREFIX="${TARGDIR}" -DHDF5_ENABLE_SZIP_SUPPORT=TRUE -DHDF5_ENABLE_ZLIB_SUPPORT=TRUE ${H5_API_OP} "${ROS3OPT_CMAKE}" DCMAKE_INSTALL_NAME_DIR="${TARGDIR}/lib"
     sleep 2
     make -j "${NUMPROC}"
     if [ "x${DONCTESTS}" = "xTRUE" ]; then

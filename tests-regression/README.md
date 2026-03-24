@@ -120,6 +120,7 @@ The following environmental variables can be used to control the behavior at run
 * `USE_CXX` - `C++` language compiler to use.
 	* `g++` - Default
 	* `clang++`
+* `USE_32BIT` - Compile 32-bit dependencies and netCDF. Default: `FALSE`.
 
 > Note that these options are currently only honored by the `serial` and `serial32` images.  How they function with the parallel images is TBD.
 
@@ -241,4 +242,6 @@ This will put you into the shell for the docker container.  Note that any change
 
     $ docker run --rm -it -e CBRANCH=v4.9.2 -e RUNF=OFF -e CTEST_REPEAT=3 -e RUNJAVA=TRUE -v /path/to/cdmUnitTest:/share/testdata/cdmUnitTest -v ./results:/results unidata/nctests
 
-    
+### Running netCDF tests using 32-bit software
+
+    $ docker run --rm -it -e USE_32BIT=TRUE 

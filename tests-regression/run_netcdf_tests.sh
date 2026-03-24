@@ -7,7 +7,7 @@
 set -e
 
 trap "echo TRAPed signal" HUP INT QUIT KILL TERM
-
+export BITARG32=""
 if [ "${USER}" = "root" ]; then
     export SUDOCMD=""
 else
@@ -284,6 +284,14 @@ fi
 #
 
 ## 
+# Set up 32-bit toolchain
+##
+if [ "${USE_32BIT}" = "TRUE" ]; then
+    ${SUDOCMD} apt update && ${SUDOCMD} apt install -y gcc-multilib
+    export BITARG32="-m32"
+fi
+
+## 
 # Set Target Dir
 ##
 export TARGDIR="/environments/${H5VER}-${USE_CC}"
@@ -318,8 +326,6 @@ if [ ${USE_CC} = "icx" ]; then
     USE_CXX=icpx
     sleep 2
     env | sort
-
-
 fi
 ##
 # End icx compiler stanza.
@@ -354,7 +360,11 @@ else
             TMPROS3OPT="-v"
         fi
 
-        ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" -j "${TESTPROC}" -t "${TARGDIR}" "${TMPROS3OPT}"
+        if [ ${BITARG32} != "" ]; then
+            IHDF5ARG="-y"
+        fi
+
+        ${SUDOCMD} /home/tester/install_hdf5.sh -c "${USE_CC}" -d "${H5VER}" "${IHDF5ARG}" -j "${TESTPROC}" -t "${TARGDIR}" "${TMPROS3OPT}" 
     fi
 fi
 
@@ -381,7 +391,7 @@ if [ "${H4VER}" != "" ]; then
     tar -zxf "${H4FILE}"
     cd "${H4DIR}"
     autoreconf -if
-    CFLAGS="${CFLAGS} -Wno-implicit-function-declaration -fPIC" CC="${NCCOMP}" ./configure --prefix="${TARGDIR}" ${BUILDARGAC} --disable-netcdf --disable-fortran
+    CFLAGS="${CFLAGS} -Wno-implicit-function-declaration -fPIC ${BITARG32}" CC="${NCCOMP}" ./configure --prefix="${TARGDIR}" ${BUILDARGAC} --disable-netcdf --disable-fortran
     sleep 2
     ${SUDOCMD} make install -j "${TESTPROC}"
     make clean -j "${TESTPROC}"
@@ -414,7 +424,7 @@ fi
 ###
 
 export FLAGS="-I${TARGDIR}/include -I/usr/include/hdf5/serial ${FLAGS}"
-export CFLAGS="-I${TARGDIR}/include -I/usr/include/hdf5/serial ${CFLAGS}"
+export CFLAGS="-I${TARGDIR}/include -I/usr/include/hdf5/serial ${CFLAGS} ${BITARG32}"
 export LDFLAGS="-L${TARGDIR}/lib ${LDFLAGS} -L/usr/lib/$(uname -m)-linux-gnu/"
 export LD_LIBRARY_PATH="${TARGDIR}/lib:${LD_LIBRARY_PATH}:/usr/lib/$(uname -m)-linux-gnu"
 export LIBDIR="${TARGDIR}/lib:${LIBDIR}:/usr/lib/$(uname -m)-linux-gnu/"
@@ -556,7 +566,7 @@ while [[ $CCOUNT -le $CREPS ]]; do
         sleep 2
         mkdir -p build-netcdf-c
         cd build-netcdf-c
-        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_MMAP=ON "${H4CMAKEOPT}" -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=${USE_CXX} ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} ${S3OPTS_CMAKE} -DCMAKE_C_FLAGS="${CMEM}" -DENABLE_TESTS="${RUNC}"; CHECKERR
+        cmake ${WORKING_DIRECTORY}/netcdf-c -DCMAKE_INSTALL_PREFIX=${NC_TARGDIR} ${CMAKE_CDOC_OPTS} -DNETCDF_ENABLE_MMAP=ON "${H4CMAKEOPT}" -DBUILDNAME_PREFIX="docker$BITNESS-$USE_CC" -DBUILDNAME_SUFFIX="$CBRANCH" -DCMAKE_C_COMPILER=$USE_CC -DCMAKE_CXX_COMPILER=${USE_CXX} ${CMAKE_PAR_OPTS} ${CMAKE_COPTS} ${S3OPTS_CMAKE} -DCMAKE_C_FLAGS="${CMEM} ${BITARG32}" -DENABLE_TESTS="${RUNC}"; CHECKERR
         make clean
 
         if [ "x$RUNC" == "xTRUE" ]; then
@@ -627,7 +637,7 @@ done
 cd "${WORKING_DIRECTORY}"
 
 export CPPFLAGS="${CPPFLAGS} -I/usr/include/hdf5/serial -I${NC_TARGDIR}/include"
-export CFLAGS="${CFLAGS} -I/usr/include/hdf5/serial -I${NC_TARGDIR}/include"
+export CFLAGS="${CFLAGS} -I/usr/include/hdf5/serial -I${NC_TARGDIR}/include ${BITARG32}"
 export LDFLAGS="${LDFLAGS} -L${NC_TARGDIR}/lib -L/usr/lib/$(uname -m)-linux-gnu/"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${NC_TARGDIR}/lib:/usr/lib/$(uname -m)-linux-gnu"
 export LIBDIR="${LIBDIR}:${NC_TARGDIR}/lib:/usr/lib/$(uname-m)-linux-gnu/"

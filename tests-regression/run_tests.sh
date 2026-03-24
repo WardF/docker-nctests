@@ -50,7 +50,7 @@ dosummary() {
     echo -e "===================================="
     echo -e "\to Contents of ${WORKING_DIRECTORY}"
     echo -e ""
-    ls -alh ${WORKING_DIRECTOR}
+    ls -alh ${WORKING_DIRECTORY}
     echo -e "===================================="
 }
 
@@ -123,18 +123,22 @@ elif [ "${USE_BUILDSYSTEM}" = "both" ]; then
     export USEAC=TRUE
 fi
 
+
+${SUDOCMD} mkdir -p ${WORKING_DIRECTORY}
 dosummary
 
 echo $(date)
 echo "Running Test Type: ${TESTTYPE}"
 echo "Using compiler: ${USE_CC}"
+if [ "${USE_32BIT}" != "" ]; then
+    echo "Using 32-bit: ${USE_32BIT}"
+fi
 echo ""
 sleep 1
 
 cd /home/tester
 
 
-${SUDOCMD} mkdir -p ${WORKING_DIRECTORY}
 ${SUDOCMD} chown -R tester:tester ${WORKING_DIRECTORY}
 cd ${WORKING_DIRECTORY}
 
