@@ -19,6 +19,8 @@ BUILDARGCMAKE="-DBUILD_SHARED_LIBS=TRUE"
 BUILDTYPECFLAG=""
 TARGDIR="${HOME}/hdf5-install"
 DO32BIT=""
+IHDF5ARG=""
+BITARG32=""
 
 ROS3OPT_AC="--enable-ros3-vfd"
 ROS3OPT_CMAKE="-DHDF5_ENABLE_ROS3_VFD=ON"
@@ -109,7 +111,7 @@ if [ $# -lt 1 ]; then
     exit
 fi
 ALLARGS="$@"
-LONGARGS=$(getopt -o a:c:d:hj:p:t:vy --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir:,disable-ros3,--enable-32bit -- "$@")
+LONGARGS=$(getopt -o a:c:d:hj:p:t:vy --long hh5suffix:,compiler:,h5ver:,help,cpus:,pncver:,targdir:,disable-ros3,enable-32bit -- "$@")
 
 #echo "LONGARGS: ${LONGARGS}"
 eval set -- $LONGARGS
@@ -335,7 +337,13 @@ if [ "x${USEBUILD}" = "xac" ]; then
         BUILDTESTSTRING=""
     fi
 
-    autoreconf -if 
+    if [ "${BITARG32}" != "" ]; then
+        sudo apt install -y libtool:i386
+        autoreconf -if 
+        sudo apt install -y g++:i386
+    else
+        autoreconf -if
+    fi
     H5_API_OP="--with-default-api-version=v110"
     CFLAGS="${CFLAGS} ${HDF5_CFLAGS} ${BITARG32} -Wno-implicit-function-declaration" CXX=$USE_CXX CC="${NCCOMP}" LDFLAGS="${LDFLAGS} ${HDF5_LDFLAGS}" ./configure ${BUILDARGAC} "${BUILDTESTSTRING}" --prefix="${TARGDIR}" "${H5PAROPT}" --enable-hl --with-szlib ${H5_API_OP} "${BUILDDEBUGHDF5}" "${ROS3OPT_AC}"
     sleep 2

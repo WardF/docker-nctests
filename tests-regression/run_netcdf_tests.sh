@@ -360,7 +360,7 @@ else
             TMPROS3OPT="-v"
         fi
 
-        if [ ${BITARG32} != "" ]; then
+        if [ "${BITARG32}" != "" ]; then
             IHDF5ARG="-y"
         fi
 
@@ -390,7 +390,15 @@ if [ "${H4VER}" != "" ]; then
     wget "${H4URL}"
     tar -zxf "${H4FILE}"
     cd "${H4DIR}"
-    autoreconf -if
+
+    if [ "${USE_32BIT}" = "TRUE" ]; then
+        sudo apt install -y libtool:i386
+        autoreconf -if 
+        sudo apt install -y g++:i386 zlib1g-dev:i386 zlib1g:i386
+    else
+        autoreconf -if
+    fi
+
     CFLAGS="${CFLAGS} -Wno-implicit-function-declaration -fPIC ${BITARG32}" CC="${NCCOMP}" ./configure --prefix="${TARGDIR}" ${BUILDARGAC} --disable-netcdf --disable-fortran
     sleep 2
     ${SUDOCMD} make install -j "${TESTPROC}"
@@ -425,7 +433,7 @@ fi
 
 export FLAGS="-I${TARGDIR}/include -I/usr/include/hdf5/serial ${FLAGS}"
 export CFLAGS="-I${TARGDIR}/include -I/usr/include/hdf5/serial ${CFLAGS} ${BITARG32}"
-export LDFLAGS="-L${TARGDIR}/lib ${LDFLAGS} -L/usr/lib/$(uname -m)-linux-gnu/"
+export LDFLAGS="-L${TARGDIR}/lib ${LDFLAGS} -L/usr/lib/$(uname -m)-linux-gnu/ ${BITARG32}"
 export LD_LIBRARY_PATH="${TARGDIR}/lib:${LD_LIBRARY_PATH}:/usr/lib/$(uname -m)-linux-gnu"
 export LIBDIR="${TARGDIR}/lib:${LIBDIR}:/usr/lib/$(uname -m)-linux-gnu/"
 export PATH="${TARGDIR}/bin:$PATH"
@@ -608,7 +616,15 @@ while [[ $CCOUNT -le $CREPS ]]; do
         sleep 2
         cd netcdf-c
         if [ ! -f "configure" ]; then
-            autoreconf -if
+
+            if [ "${USE_32BIT}" = "TRUE" ]; then
+                sudo apt install -y libtool:i386
+                autoreconf -if 
+                sudo apt install -y g++:i386 zlib1g-dev:i386 zlib1g:i386
+            else
+                autoreconf -if
+            fi
+        
         fi
         CXX=$USE_CXX CC=$USE_CC ./configure --prefix=${NC_TARGDIR} ${AC_PAR_OPTS} ${AC_CDOC_OPTS} ${H4ACOPT} --enable-extra-tests --enable-mmap ${AC_COPTS} ${S3OPTS_AC}
         make clean
@@ -638,7 +654,7 @@ cd "${WORKING_DIRECTORY}"
 
 export CPPFLAGS="${CPPFLAGS} -I/usr/include/hdf5/serial -I${NC_TARGDIR}/include"
 export CFLAGS="${CFLAGS} -I/usr/include/hdf5/serial -I${NC_TARGDIR}/include ${BITARG32}"
-export LDFLAGS="${LDFLAGS} -L${NC_TARGDIR}/lib -L/usr/lib/$(uname -m)-linux-gnu/"
+export LDFLAGS="${LDFLAGS} -L${NC_TARGDIR}/lib -L/usr/lib/$(uname -m)-linux-gnu/ ${BITARG32}"
 export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${NC_TARGDIR}/lib:/usr/lib/$(uname -m)-linux-gnu"
 export LIBDIR="${LIBDIR}:${NC_TARGDIR}/lib:/usr/lib/$(uname-m)-linux-gnu/"
 export PATH="${NC_TARGDIR}/bin:$PATH"
@@ -723,7 +739,13 @@ if [ "x$RUNF" == "xTRUE" ]; then
             sleep 2
             cd netcdf-fortran
             if [ ! -f "configure" ]; then
-                autoreconf -if
+                    if [ "${USE_32BIT}" = "TRUE" ]; then
+                        sudo apt install -y libtool:i386
+                        autoreconf -if 
+                        sudo apt install -y g++:i386 zlib1g-dev:i386 zlib1g:i386
+                    else
+                        autoreconf -if
+                    fi
             fi
             CFLAGS=${CFLAGS} CPPFLAGS=${CPPFLAGS} LDFLAGS=${LDFLAGS} CC=$USE_CC FC=${USE_FC} F77=${USE_FC} ./configure "${AC_FOPTS}" ${AC_FDOC_OPTS}
             make -j $TESTPROC_FORTRAN ; CHECKERR
@@ -781,7 +803,13 @@ if [ "x$RUNCXX" == "xTRUE" ]; then
             sleep 2
             cd netcdf-cxx4
             if [ ! -f "configure" ]; then
-                autoreconf -if
+                   if [ "${USE_32BIT}" = "TRUE" ]; then
+                        sudo apt install -y libtool:i386
+                        autoreconf -if 
+                        sudo apt install -y g++:i386 zlib1g-dev:i386 zlib1g:i386
+                    else
+                        autoreconf -if
+                    fi
             fi
             CXX=$USE_CXX ./configure "$AC_CXXOPTS"
             make -j ${TESTPROC}; CHECKERR
