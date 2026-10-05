@@ -34,6 +34,12 @@ NEWBUILD="build-$NEWVER"
 
 TDIR="netcdf-cxx4"
 
+export NCVER=v4.10.1
+git clone https://github.com/Unidata/netcdf-c && cd netcdf-c && git checkout ${NCVER} && mkdir build && cd build && cmake .. -DENABLE_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr && make -j 100 && sudo make install
+##
+# End install netCDF-C
+##
+
 git clone http://github.com/Unidata/netcdf-cxx4 $TDIR
 cd $TDIR
 mkdir $OLDBUILD
